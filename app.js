@@ -12,6 +12,22 @@ var EngagementApp = /** @class */ (function () {
         this.init();
     }
     EngagementApp.prototype.init = function () {
+        // Prevent scrolling during loading screens
+        document.body.style.overflow = 'hidden';
+        // Ensure initial visibility state is consistent on refresh / bfcache restore
+        if (this.romanticLoader) {
+            this.romanticLoader.style.display = 'flex';
+            this.romanticLoader.style.opacity = '1';
+        }
+        if (this.openingScreen) {
+            this.openingScreen.style.display = 'none';
+            this.openingScreen.style.opacity = '0';
+        }
+        if (this.mainContainer) {
+            this.mainContainer.style.display = 'none';
+            this.mainContainer.style.opacity = '0';
+        }
+        
         this.setupRomanticLoader();
         this.setupOpeningAnimation();
         this.setupNavigation();
@@ -51,6 +67,11 @@ var EngagementApp = /** @class */ (function () {
                     // Show opening screen with same beautiful transition
                     if (_this.openingScreen) {
                         _this.openingScreen.style.display = 'flex';
+                        // Force reflow for transition safety
+                        void _this.openingScreen.offsetWidth;
+                        _this.openingScreen.style.transition = 'opacity 600ms ease';
+                        _this.openingScreen.style.opacity = '1';
+                        // Keep opening visible for exactly 2 seconds, then fade out
                         setTimeout(function() {
                             if (_this.openingScreen) {
                                 _this.openingScreen.style.opacity = '0';
@@ -58,14 +79,17 @@ var EngagementApp = /** @class */ (function () {
                                     if (_this.openingScreen) {
                                         _this.openingScreen.style.display = 'none';
                                     }
-                                    // Show main container with same beautiful effect
                                     if (_this.mainContainer) {
                                         _this.mainContainer.style.display = 'block';
                                         _this.mainContainer.style.opacity = '1';
+                                        document.body.style.overflow = 'auto';
+                                        document.body.classList.add('loading-complete');
+                                        // Trigger modern animations for main page
+                                        _this.triggerMainPageAnimations();
                                     }
-                                }, isMobile ? 600 : 800);
+                                }, 650);
                             }
-                        }, isMobile ? 2000 : 2000); // Set to 2 seconds for both mobile and desktop
+                        }, 3000); // exactly 3 seconds
                     }
                 }, isMobile ? 600 : 800);
             }
@@ -87,9 +111,52 @@ var EngagementApp = /** @class */ (function () {
                 if (_this.mainContainer) {
                     _this.mainContainer.style.display = 'block';
                     _this.mainContainer.style.opacity = '1';
+                    // Re-enable scrolling in fallback too
+                    document.body.style.overflow = 'auto';
+                    document.body.classList.add('loading-complete');
                 }
             }
         }, totalDuration);
+    };
+    EngagementApp.prototype.triggerMainPageAnimations = function () {
+        var _this = this;
+        // Modern mobile-first entrance animations
+        setTimeout(function() {
+            // Hero section cascade
+            var heroTitle = document.querySelector('.main-title');
+            var coupleNames = document.querySelector('.couple-names');
+            var heroSubtitle = document.querySelector('.hero-subtitle');
+            
+            if (heroTitle) {
+                heroTitle.style.transform = 'translateY(0)';
+                heroTitle.style.opacity = '1';
+            }
+            
+            setTimeout(function() {
+                if (coupleNames) {
+                    coupleNames.style.transform = 'translateY(0) scale(1)';
+                    coupleNames.style.opacity = '1';
+                }
+            }, 200);
+            
+            setTimeout(function() {
+                if (heroSubtitle) {
+                    heroSubtitle.style.transform = 'translateY(0)';
+                    heroSubtitle.style.opacity = '1';
+                }
+            }, 400);
+            
+            // Stagger content sections
+            var sections = document.querySelectorAll('.content-card');
+            sections.forEach(function(section, index) {
+                setTimeout(function() {
+                    section.style.transform = 'translateY(0)';
+                    section.style.opacity = '1';
+                    section.classList.add('animate-in');
+                }, 600 + (index * 150));
+            });
+            
+        }, 100);
     };
     EngagementApp.prototype.setupOpeningAnimation = function () {
         // Opening animation is now handled in setupRomanticLoader
@@ -322,30 +389,60 @@ var EngagementApp = /** @class */ (function () {
         }
     };
     EngagementApp.prototype.setupScrollAnimations = function () {
-        // Create intersection observer for scroll animations
+        // Modern intersection observer with enhanced mobile performance
         var observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
+            threshold: [0, 0.1, 0.3, 0.7],
+            rootMargin: '0px 0px -20px 0px'
         };
+        
         var observer = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('in-view');
+                    // Add progressive reveal classes
+                    if (entry.intersectionRatio > 0.1) {
+                        entry.target.classList.add('scroll-reveal');
+                        entry.target.style.animationDelay = '0ms';
+                    }
+                    
+                    // Special handling for schedule cards
+                    if (entry.target.classList.contains('schedule-card')) {
+                        var cards = document.querySelectorAll('.schedule-card');
+                        var index = Array.from(cards).indexOf(entry.target);
+                        entry.target.style.animationDelay = (index * 100) + 'ms';
+                        entry.target.classList.add('slide-in-stagger');
+                    }
+                    
+                    // Enhanced countdown animation
+                    if (entry.target.classList.contains('countdown-container')) {
+                        entry.target.classList.add('countdown-reveal');
+                        var numbers = entry.target.querySelectorAll('.countdown-number');
+                        numbers.forEach(function(num, i) {
+                            setTimeout(function() {
+                                num.classList.add('number-pop');
+                            }, i * 100);
+                        });
+                    }
                 }
             });
         }, observerOptions);
         
-        // Observe all elements with scroll-animate class
-        var animateElements = document.querySelectorAll('.scroll-animate');
+        // Observe all animatable elements
+        var animateElements = document.querySelectorAll(
+            '.schedule-card, .countdown-container, .info-item, .venue-info, .directions-btn'
+        );
         animateElements.forEach(function (element) {
             observer.observe(element);
         });
         
-        // Also observe content cards for shimmer effect
-        var contentCards = document.querySelectorAll('.content-card');
-        contentCards.forEach(function (card) {
-            observer.observe(card);
-        });
+        // Modern parallax scroll effect for hero
+        var heroSection = document.querySelector('.hero-section');
+        if (heroSection) {
+            window.addEventListener('scroll', function() {
+                var scrolled = window.pageYOffset;
+                var parallax = scrolled * 0.3;
+                heroSection.style.transform = 'translateY(' + parallax + 'px)';
+            }, { passive: true });
+        }
     };
     EngagementApp.prototype.clearCountdown = function () {
         if (this.countdownTimer) {
