@@ -65,7 +65,7 @@ var EngagementApp = /** @class */ (function () {
                                     }
                                 }, isMobile ? 600 : 800);
                             }
-                        }, isMobile ? 1500 : 2000); // Keep the romantic feel
+                        }, isMobile ? 2000 : 2000); // Set to 2 seconds for both mobile and desktop
                     }
                 }, isMobile ? 600 : 800);
             }
