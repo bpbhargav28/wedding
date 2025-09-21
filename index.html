@@ -6,10 +6,66 @@
   <title>Bhargav & Sowmya - Engagement Invitation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Poppins:wght@200;300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Inter:wght@200;300;400;500;600;700&family=Great+Vibes&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Floating Hearts and Rings -->
+  <div class="floating-elements">
+    <!-- First layer of floating elements -->
+    <div class="floating-heart" style="left: 5%; animation-delay: 0s;">💕</div>
+    <div class="floating-ring" style="left: 15%; animation-delay: 2s;">💍</div>
+    <div class="floating-heart" style="left: 25%; animation-delay: 4s;">💖</div>
+    <div class="floating-ring" style="left: 35%; animation-delay: 1s;">💎</div>
+    <div class="floating-heart" style="left: 45%; animation-delay: 3s;">�</div>
+    <div class="floating-ring" style="left: 55%; animation-delay: 5s;">�💍</div>
+    <div class="floating-heart" style="left: 65%; animation-delay: 2.5s;">💕</div>
+    <div class="floating-ring" style="left: 75%; animation-delay: 1.5s;">💎</div>
+    <div class="floating-heart" style="left: 85%; animation-delay: 4.5s;">�</div>
+    <div class="floating-ring" style="left: 95%; animation-delay: 0.5s;">�💍</div>
+    
+    <!-- Second layer with different timing -->
+    <div class="floating-heart floating-slow" style="left: 8%; animation-delay: 6s;">💗</div>
+    <div class="floating-ring floating-slow" style="left: 18%; animation-delay: 7s;">💍</div>
+    <div class="floating-heart floating-slow" style="left: 28%; animation-delay: 8s;">💕</div>
+    <div class="floating-ring floating-slow" style="left: 38%; animation-delay: 9s;">💎</div>
+    <div class="floating-heart floating-slow" style="left: 48%; animation-delay: 10s;">💖</div>
+    <div class="floating-ring floating-slow" style="left: 58%; animation-delay: 6.5s;">💍</div>
+    <div class="floating-heart floating-slow" style="left: 68%; animation-delay: 7.5s;">💗</div>
+    <div class="floating-ring floating-slow" style="left: 78%; animation-delay: 8.5s;">💎</div>
+    <div class="floating-heart floating-slow" style="left: 88%; animation-delay: 9.5s;">💕</div>
+    
+    <!-- Third layer with extra slow timing -->
+    <div class="floating-ring floating-extra-slow" style="left: 12%; animation-delay: 11s;">💍</div>
+    <div class="floating-heart floating-extra-slow" style="left: 32%; animation-delay: 12s;">💖</div>
+    <div class="floating-ring floating-extra-slow" style="left: 52%; animation-delay: 13s;">💎</div>
+    <div class="floating-heart floating-extra-slow" style="left: 72%; animation-delay: 14s;">💗</div>
+    <div class="floating-ring floating-extra-slow" style="left: 92%; animation-delay: 15s;">💍</div>
+  </div>
+
+  <!-- Romantic Loading Screen -->
+  <div class="romantic-loader" id="romanticLoader">
+    <div class="loader-content">
+      <div class="floating-petals">
+        <span class="petal">🌸</span>
+        <span class="petal">🌺</span>
+        <span class="petal">🌸</span>
+        <span class="petal">🌺</span>
+        <span class="petal">🌸</span>
+        <span class="petal">🌺</span>
+      </div>
+      <div class="loader-hearts">
+        <div class="heart-pulse">💕</div>
+      </div>
+      <div class="loader-text">
+        <h1 class="loader-title">Loading something special just for you…</h1>
+        <div class="loader-bar">
+          <div class="loader-fill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Opening Animation -->
   <div class="opening-screen" id="openingScreen">
     <div class="opening-content">
@@ -40,23 +96,28 @@
           <span>💗</span>
           <span>💕</span>
           <span>💖</span>
+          <span>💍</span>
+          <span>💎</span>
+          <span>💕</span>
+          <span>💍</span>
+          <span>💖</span>
         </div>
       </div>
-      <div class="hero-content">
-        <h1 class="main-title">Engagement</h1>
-        <div class="couple-names">
+      <div class="hero-content scroll-animate fade-in">
+        <h1 class="main-title scroll-animate scale-up stagger-1">Engagement</h1>
+        <div class="couple-names scroll-animate fade-in stagger-2">
           <span class="groom">Bhargav</span>
           <div class="heart-divider">
             <span class="heart-icon">💕</span>
           </div>
           <span class="bride">Sowmya</span>
         </div>
-        <p class="hero-subtitle">Together with their families, request the pleasure of your company</p>
+        <p class="hero-subtitle scroll-animate fade-in stagger-3">Together with their families, request the pleasure of your company</p>
       </div>
     </header>
 
     <!-- Navigation -->
-    <nav class="nav-tabs" role="tablist">
+    <nav class="nav-tabs" role="tablist" style="display: none;">
       <button class="nav-tab active" data-tab="details" role="tab" aria-selected="true">
         <span class="tab-icon">📅</span>
         <span class="tab-text">Details</span>
@@ -67,38 +128,38 @@
       </button>
     </nav>
 
-    <!-- Tab Content -->
-    <main class="tab-content">
-      <!-- Details Tab -->
-      <section class="tab-panel active" id="details" role="tabpanel">
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Event Details Section -->
+      <section class="details-section scroll-animate slide-left">
         <div class="content-card">
-          <div class="event-info">
-            <div class="info-item">
+          <div class="event-info scroll-animate fade-in stagger-1">
+            <div class="info-item scroll-animate slide-right stagger-2">
               <div class="info-icon">📅</div>
               <div class="info-content">
                 <h3>Date</h3>
                 <p>Sunday, 12th October 2025</p>
               </div>
             </div>
-            <div class="info-item">
+            <div class="info-item scroll-animate slide-right stagger-3">
               <div class="info-icon">🕚</div>
               <div class="info-content">
                 <h3>Time</h3>
-                <p>11:00 AM</p>
+                <p>12:00 PM (Noon) IST</p>
               </div>
             </div>
-            <div class="countdown-container">
-              <h3 class="countdown-title">Countdown to Our Special Day</h3>
+            <div class="countdown-container scroll-animate scale-up stagger-4">
+              <h3 class="countdown-title">Countdown to Forever</h3>
               <div class="countdown-timer" id="countdownTimer">
-                <div class="countdown-item">
+                <div class="countdown-item scroll-animate fade-in stagger-1">
                   <span class="countdown-number" id="days">000</span>
                   <span class="countdown-label">Days</span>
                 </div>
-                <div class="countdown-item">
+                <div class="countdown-item scroll-animate fade-in stagger-2">
                   <span class="countdown-number" id="hours">00</span>
                   <span class="countdown-label">Hours</span>
                 </div>
-                <div class="countdown-item">
+                <div class="countdown-item scroll-animate fade-in stagger-3">
                   <span class="countdown-number" id="minutes">00</span>
                   <span class="countdown-label">Minutes</span>
                 </div>
@@ -109,41 +170,33 @@
               </div>
             </div>
           </div>
-          <div class="blessing">
-            <p>"Two souls, one heart, forever united in love and joy"</p>
-          </div>
           
-          <div class="calendar-links">
+          <div class="calendar-links scroll-animate scale-up stagger-5">
             <h3 class="calendar-title">Add to Calendar</h3>
             <div class="calendar-buttons">
-              <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Bhargav%20%26%20Sowmya%20Engagement&dates=20251012T053000Z/20251012T073000Z&details=Join%20us%20for%20the%20engagement%20ceremony%20of%20Bhargav%20and%20Sowmya&location=Shree%20Padmavathi%20Venkateshwara%20Samudaya%20Bhavana%2C%204th%20Main%20Rd%2C%20Jayanagar%20West%2C%20Tumakuru%2C%20Karnataka%20572102" 
-                 target="_blank" rel="noopener" class="calendar-btn google-cal">
+              <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Bhargav%20%26%20Sowmya%20Engagement&dates=20251012T063000Z/20251012T083000Z&details=Join%20us%20for%20the%20engagement%20ceremony%20of%20Bhargav%20and%20Sowmya&location=Shree%20Padmavathi%20Venkateshwara%20Samudaya%20Bhavana%2C%204th%20Main%20Rd%2C%20Jayanagar%20West%2C%20Tumakuru%2C%20Karnataka%20572102" 
+                 target="_blank" rel="noopener" class="calendar-btn google-cal scroll-animate fade-in stagger-1">
                 <span class="btn-icon">📅</span>
-                <span class="btn-text">Google Calendar</span>
-              </a>
-              <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Bhargav%20%26%20Sowmya%20Engagement&dates=20251012T053000Z/20251012T073000Z&details=Join%20us%20for%20the%20engagement%20ceremony%20of%20Bhargav%20and%20Sowmya&location=Shree%20Padmavathi%20Venkateshwara%20Samudaya%20Bhavana%2C%204th%20Main%20Rd%2C%20Jayanagar%20West%2C%20Tumakuru%2C%20Karnataka%20572102" 
-                 target="_blank" rel="noopener" class="calendar-btn apple-cal">
-                <span class="btn-icon">📱</span>
-                <span class="btn-text">iPhone Calendar</span>
+                <span class="btn-text">Add to Google Calendar</span>
               </a>
             </div>
           </div>
         </div>
       </section>
 
-
-      <!-- Location Tab -->
-      <section class="tab-panel" id="location" role="tabpanel">
+      <!-- Venue Section -->
+      <section class="venue-section scroll-animate slide-right">
         <div class="content-card">
-          <h2 class="section-title">Venue Details</h2>
-          <div class="venue-info">
+          <h2 class="section-title scroll-animate fade-in stagger-1">Venue Details</h2>
+          <div class="venue-info scroll-animate slide-left stagger-2">
             <div class="venue-name">Shree Padmavathi Venkateshwara Samudaya Bhavana</div>
             <div class="venue-address">
               <p>4th Main Rd, Jayanagar West</p>
               <p>Tumakuru, Karnataka 572102</p>
             </div>
+            <p class="venue-subtitle">A Beautiful Venue for Our Special Day</p>
           </div>
-          <div class="map-container">
+          <div class="map-container scroll-animate scale-up stagger-3">
             <iframe
               src="https://www.google.com/maps?q=Shree+Padmavathi+Venkateshwara+Samudaya+Bhavana+Tumkur&output=embed"
               title="Venue Location"
@@ -161,22 +214,44 @@
         </div>
       </section>
 
+      <!-- Schedule Section -->
+      <section class="schedule-section scroll-animate fade-in">
+        <div class="content-card">
+          <h2 class="section-title scroll-animate slide-left stagger-1">Event Schedule</h2>
+          <div class="modern-schedule scroll-animate scale-up stagger-2">
+            <div class="schedule-card scroll-animate slide-up stagger-1">
+              <div class="schedule-icon">🤝</div>
+              <div class="schedule-time">12:00 PM</div>
+              <div class="schedule-title">Guest Arrival & Welcome</div>
+              <div class="schedule-description">Join us as we welcome our beloved family and friends with love and warmth</div>
+            </div>
+            <div class="schedule-card scroll-animate slide-up stagger-2">
+              <div class="schedule-icon">🍽️</div>
+              <div class="schedule-time">12:30 PM</div>
+              <div class="schedule-title">Lunch & Refreshments</div>
+              <div class="schedule-description">Enjoy delicious food and refreshments as we gather together</div>
+            </div>
+            <div class="schedule-card scroll-animate slide-up stagger-3">
+              <div class="schedule-icon">💍</div>
+              <div class="schedule-time">1:00 PM</div>
+              <div class="schedule-title">Nishchitartha - Engagement Ceremony</div>
+              <div class="schedule-description">The sacred moment of our engagement</div>
+            </div>
+            <div class="schedule-card scroll-animate slide-up stagger-4">
+              <div class="schedule-icon">📸</div>
+              <div class="schedule-time">2:00 PM</div>
+              <div class="schedule-title">Blessings & Photography</div>
+              <div class="schedule-description">Receiving blessings from our elders and capturing precious memories with family</div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-content">
-        <p class="footer-text">With love & blessings</p>
-        <div class="footer-hearts">
-          <span>💕</span>
-          <span>💖</span>
-          <span>💗</span>
-        </div>
-        <p class="footer-names">Bhargav & Sowmya</p>
-        <div class="copyright">
-          <p class="copyright-text">Website managed by Bhargav</p>
-        </div>
-      </div>
+    <footer style="text-align: center; padding: 20px; font-size: 14px; color: #666;">
+      <p>Website crafted with ❤️ by Bhargav B P</p>
+      <p>&copy; 2025 Bhargav B P</p>
     </footer>
   </div>
 
