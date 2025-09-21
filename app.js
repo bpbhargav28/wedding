@@ -24,16 +24,21 @@ var EngagementApp = /** @class */ (function () {
         if (!this.romanticLoader)
             return;
         
+        // Detect mobile for performance optimization but keep same visual experience
+        var isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        var loadingSpeed = isMobile ? 150 : 200; // Slightly faster on mobile
+        var totalDuration = isMobile ? 3000 : 4000; // Slightly shorter on mobile
+        
         // Simulate loading progress
         var loaderFill = this.romanticLoader.querySelector('.loader-fill');
         var progress = 0;
         var loadingInterval = setInterval(function() {
-            progress += Math.random() * 15 + 5; // Random progress between 5-20%
+            progress += Math.random() * 15 + 5; // Same progress rate
             if (progress >= 100) {
                 progress = 100;
                 clearInterval(loadingInterval);
                 
-                // Hide romantic loader and show all content
+                // Keep same timing but slightly faster on mobile
                 setTimeout(function () {
                     if (_this.romanticLoader) {
                         _this.romanticLoader.style.opacity = '0';
@@ -41,9 +46,9 @@ var EngagementApp = /** @class */ (function () {
                             if (_this.romanticLoader) {
                                 _this.romanticLoader.style.display = 'none';
                             }
-                        }, 500);
+                        }, isMobile ? 400 : 500);
                     }
-                    // Show opening screen briefly, then reveal main content
+                    // Show opening screen with same beautiful transition
                     if (_this.openingScreen) {
                         _this.openingScreen.style.display = 'flex';
                         setTimeout(function() {
@@ -53,22 +58,38 @@ var EngagementApp = /** @class */ (function () {
                                     if (_this.openingScreen) {
                                         _this.openingScreen.style.display = 'none';
                                     }
-                                    // Show main container immediately
+                                    // Show main container with same beautiful effect
                                     if (_this.mainContainer) {
                                         _this.mainContainer.style.display = 'block';
                                         _this.mainContainer.style.opacity = '1';
                                     }
-                                }, 800);
+                                }, isMobile ? 600 : 800);
                             }
-                        }, 2000);
+                        }, isMobile ? 1500 : 2000); // Keep the romantic feel
                     }
-                }, 800);
+                }, isMobile ? 600 : 800);
             }
             
             if (loaderFill) {
                 loaderFill.style.width = progress + '%';
             }
-        }, 200);
+        }, loadingSpeed);
+        
+        // Fallback: Force load after maximum time to prevent getting stuck
+        setTimeout(function() {
+            if (_this.romanticLoader && _this.romanticLoader.style.display !== 'none') {
+                if (_this.romanticLoader) {
+                    _this.romanticLoader.style.display = 'none';
+                }
+                if (_this.openingScreen) {
+                    _this.openingScreen.style.display = 'none';
+                }
+                if (_this.mainContainer) {
+                    _this.mainContainer.style.display = 'block';
+                    _this.mainContainer.style.opacity = '1';
+                }
+            }
+        }, totalDuration);
     };
     EngagementApp.prototype.setupOpeningAnimation = function () {
         // Opening animation is now handled in setupRomanticLoader
