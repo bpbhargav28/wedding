@@ -1,6 +1,7 @@
 // Modern Engagement Invitation App
 var EngagementApp = /** @class */ (function () {
     function EngagementApp() {
+        this.romanticLoader = document.getElementById('romanticLoader');
         this.openingScreen = document.getElementById('openingScreen');
         this.mainContainer = document.getElementById('mainContainer');
         this.navTabs = document.querySelectorAll('.nav-tab');
@@ -11,21 +12,67 @@ var EngagementApp = /** @class */ (function () {
         this.init();
     }
     EngagementApp.prototype.init = function () {
+        this.setupRomanticLoader();
         this.setupOpeningAnimation();
         this.setupNavigation();
         this.setupCountdown();
         this.addFloatingHearts();
+        this.setupScrollAnimations();
+    };
+    EngagementApp.prototype.setupRomanticLoader = function () {
+        var _this = this;
+        if (!this.romanticLoader)
+            return;
+        
+        // Simulate loading progress
+        var loaderFill = this.romanticLoader.querySelector('.loader-fill');
+        var progress = 0;
+        var loadingInterval = setInterval(function() {
+            progress += Math.random() * 15 + 5; // Random progress between 5-20%
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(loadingInterval);
+                
+                // Hide romantic loader and show all content
+                setTimeout(function () {
+                    if (_this.romanticLoader) {
+                        _this.romanticLoader.style.opacity = '0';
+                        setTimeout(function() {
+                            if (_this.romanticLoader) {
+                                _this.romanticLoader.style.display = 'none';
+                            }
+                        }, 500);
+                    }
+                    // Show opening screen briefly, then reveal main content
+                    if (_this.openingScreen) {
+                        _this.openingScreen.style.display = 'flex';
+                        setTimeout(function() {
+                            if (_this.openingScreen) {
+                                _this.openingScreen.style.opacity = '0';
+                                setTimeout(function() {
+                                    if (_this.openingScreen) {
+                                        _this.openingScreen.style.display = 'none';
+                                    }
+                                    // Show main container immediately
+                                    if (_this.mainContainer) {
+                                        _this.mainContainer.style.display = 'block';
+                                        _this.mainContainer.style.opacity = '1';
+                                    }
+                                }, 800);
+                            }
+                        }, 2000);
+                    }
+                }, 800);
+            }
+            
+            if (loaderFill) {
+                loaderFill.style.width = progress + '%';
+            }
+        }, 200);
     };
     EngagementApp.prototype.setupOpeningAnimation = function () {
-        var _this = this;
-        if (!this.openingScreen)
-            return;
-        // Remove opening screen after animation
-        setTimeout(function () {
-            if (_this.openingScreen) {
-                _this.openingScreen.style.display = 'none';
-            }
-        }, 3500);
+        // Opening animation is now handled in setupRomanticLoader
+        // No need for separate timing here since we want continuous content
     };
     EngagementApp.prototype.setupNavigation = function () {
         var _this = this;
@@ -252,6 +299,32 @@ var EngagementApp = /** @class */ (function () {
         if (secondsElement) {
             secondsElement.textContent = seconds.toString().padStart(2, '0');
         }
+    };
+    EngagementApp.prototype.setupScrollAnimations = function () {
+        // Create intersection observer for scroll animations
+        var observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                }
+            });
+        }, observerOptions);
+        
+        // Observe all elements with scroll-animate class
+        var animateElements = document.querySelectorAll('.scroll-animate');
+        animateElements.forEach(function (element) {
+            observer.observe(element);
+        });
+        
+        // Also observe content cards for shimmer effect
+        var contentCards = document.querySelectorAll('.content-card');
+        contentCards.forEach(function (card) {
+            observer.observe(card);
+        });
     };
     EngagementApp.prototype.clearCountdown = function () {
         if (this.countdownTimer) {
