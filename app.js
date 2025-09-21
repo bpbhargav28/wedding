@@ -7,8 +7,8 @@ var EngagementApp = /** @class */ (function () {
         this.navTabs = document.querySelectorAll('.nav-tab');
         this.tabPanels = document.querySelectorAll('.tab-panel');
         this.countdownTimer = null;
-        // Set target date to October 12th, 2025 at 11:00 AM
-        this.targetDate = new Date('2025-10-12T11:00:00');
+        // Set target date to October 12th, 2025 at 1:00 PM
+        this.targetDate = new Date('2025-10-12T13:00:00');
         this.init();
     }
     EngagementApp.prototype.init = function () {
