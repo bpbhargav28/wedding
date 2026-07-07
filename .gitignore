@@ -24,3 +24,6 @@ yarn-error.log*
 
 # old vanilla project reference
 /wedding
+
+# Claude Code session data
+.claude/
