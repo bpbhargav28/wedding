@@ -1,175 +1,317 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import './Wedding.css';
 
-/* ╔═══════════════════════════════════════════════════════╗
-   ║  CINEMATIC ENGAGEMENT INVITATION                     ║
-   ║  Full-screen panels · Parallax · Scroll-driven       ║
-   ╚═══════════════════════════════════════════════════════╝ */
+/* ═══════════════════════════════════════════════════
+   EVENT CONSTANTS — single source of truth
+   Reception : 26 Aug 2026 · Wedding : 27 Aug 2026
+   Wedding muhurtham is the countdown target.
+   ═══════════════════════════════════════════════════ */
+const VENUE = {
+  name: 'Jain Bhavan',
+  city: 'Tumakuru, Karnataka',
+  mapEmbed: 'https://www.google.com/maps?q=Jain+Bhavan+Tumkur&output=embed',
+  mapDir:
+    'https://www.google.com/maps/dir/?api=1&destination=Jain+Bhavan+Tumkur',
+};
 
-// ─── OPENING CINEMATIC ──────────────────────────────────
-function CinematicOpening({ onFinish }) {
-  const [phase, setPhase] = useState(0);
-  // 0: dark, 1: line1, 2: line2, 3: line3, 4: wipe out
+/* Wedding muhurtham — 27 Aug 2026, 11:05 AM IST (05:35 UTC) */
+const WEDDING_TARGET = '2026-08-27T05:35:00Z';
 
-  useEffect(() => {
-    const delays = [400, 1600, 3000, 4400, 5800];
-    const timers = delays.map((d, i) => setTimeout(() => setPhase(i + 1), d));
-    const done = setTimeout(onFinish, 6800);
-    return () => { timers.forEach(clearTimeout); clearTimeout(done); };
-  }, [onFinish]);
+/* Google Calendar links (times in UTC; IST = UTC+5:30)
+   Reception : 26 Aug 7:00 PM onwards IST → 13:30 UTC start
+   Wedding   : 27 Aug 11:05–11:25 AM IST (muhurtham) → 05:35–05:55 UTC */
+const CAL_RECEPTION =
+  'https://calendar.google.com/calendar/render?action=TEMPLATE&text=Bhargav%20%26%20Sowmya%20%E2%80%94%20Reception&dates=20260826T133000Z/20260826T170000Z&details=Join%20us%20for%20the%20wedding%20reception%20of%20Bhargav%20%26%20Sowmya&location=Jain%20Bhavan%2C%20Tumakuru%2C%20Karnataka';
+const CAL_WEDDING =
+  'https://calendar.google.com/calendar/render?action=TEMPLATE&text=Bhargav%20%26%20Sowmya%20%E2%80%94%20Wedding&dates=20260827T053500Z/20260827T055500Z&details=Muhurtham%20of%20Bhargav%20%26%20Sowmya%27s%20wedding%20ceremony&location=Jain%20Bhavan%2C%20Tumakuru%2C%20Karnataka';
+
+/* ═══════════════════════════════════════════════════
+   OUTLINE MOTIF — the signature is line, not fill. Every
+   ornament here is a drawn stroke in maroon + orange:
+   a temple arch, a paisley, corner brackets.
+   ═══════════════════════════════════════════════════ */
+
+/* A double-outlined temple arch (mandapa) that frames the names. */
+function Arch({ className = '' }) {
+  return (
+    <svg className={`arch ${className}`} viewBox="0 0 300 220" fill="none" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+      {/* outer maroon rule */}
+      <path className="arch__maroon" d="M14 214 L14 92 Q14 40 62 24 Q150 -4 238 24 Q286 40 286 92 L286 214" />
+      {/* inner orange rule */}
+      <path className="arch__orange" d="M28 214 L28 96 Q28 52 68 38 Q150 14 232 38 Q272 52 272 96 L272 214" />
+      {/* keystone paisley finial */}
+      <path className="arch__orange" d="M150 8 q10 12 0 26 q-10 -14 0 -26" />
+      <circle className="arch__maroon" cx="150" cy="40" r="3" />
+    </svg>
+  );
+}
+
+/* A single outlined paisley (buta) — used as the divider heart. */
+function Paisley({ className = '' }) {
+  return (
+    <svg className={`paisley ${className}`} viewBox="-24 -20 48 40" fill="none" aria-hidden="true">
+      <path className="paisley__maroon" d="M0 16 C-16 10 -18 -8 -4 -16 C10 -22 20 -8 14 6 C11 14 4 16 0 16 Z" />
+      <path className="paisley__orange" d="M-2 10 C-11 6 -12 -6 -3 -11 C6 -15 12 -6 9 3 C7 8 2 10 -2 10 Z" />
+      <circle className="paisley__orange" cx="1" cy="-2" r="2.2" />
+    </svg>
+  );
+}
+
+/* Outlined divider: hairlines flanking a paisley. */
+function Divider() {
+  return (
+    <div className="divider" aria-hidden="true">
+      <span className="divider__rule" />
+      <Paisley className="divider__paisley" />
+      <span className="divider__rule" />
+    </div>
+  );
+}
+
+/* Corner brackets drawn as thin outlines, for framed cards. */
+function Corners() {
+  return (
+    <>
+      <i className="corner corner--tl" aria-hidden="true" />
+      <i className="corner corner--tr" aria-hidden="true" />
+      <i className="corner corner--bl" aria-hidden="true" />
+      <i className="corner corner--br" aria-hidden="true" />
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   PETALS — ambient marigold-orange petals drifting down,
+   with the occasional deep-maroon one for depth.
+   ═══════════════════════════════════════════════════ */
+function Petals() {
+  const petals = useMemo(
+    () =>
+      Array.from({ length: 18 }, (_, i) => {
+        const kind = i % 5 === 0 ? 'maroon' : 'orange';
+        return {
+          id: i,
+          kind,
+          left: (i * 5.3 + (i % 6) * 5) % 100,
+          sz: 8 + (i % 6) * 3,
+          drift: (i % 2 ? 1 : -1) * (20 + (i % 5) * 22),
+          rot: (i % 2 ? 1 : -1) * (180 + (i % 4) * 150),
+          fall: 16 + (i % 8) * 3,
+          flutter: 3 + (i % 5) * 0.9,
+          delay: -((i % 10) * 2.3),
+        };
+      }),
+    [],
+  );
 
   return (
-    <div className={`cin ${phase >= 5 ? 'cin--out' : ''}`}>
-      <div className="cin__grain" />
-      <div className="cin__content">
-        <p className={`cin__line ${phase >= 1 ? 'cin__line--vis' : ''}`}>
-          Two families
+    <div className="petals" aria-hidden="true">
+      {petals.map((p) => (
+        <span
+          key={p.id}
+          className="petals__p"
+          style={{
+            left: `${p.left}%`,
+            '--drift': `${p.drift}px`,
+            '--sz': `${p.sz}px`,
+            animationDuration: `${p.fall}s`,
+            animationDelay: `${p.delay}s`,
+          }}
+        >
+          <i
+            className={`petals__leaf petals__leaf--${p.kind}`}
+            style={{ '--rot': `${p.rot}deg`, animationDuration: `${p.flutter}s` }}
+          />
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   LOADING SCREEN — an outlined mandala draws itself in
+   inside a progress ring bound honestly to load percent.
+   ═══════════════════════════════════════════════════ */
+function LoadingScreen({ onComplete }) {
+  const [progress, setProgress] = useState(0);
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setProgress((p) => {
+        const next = p + Math.random() * 6 + 2.4;
+        if (next >= 100) {
+          clearInterval(id);
+          setTimeout(() => setExiting(true), 450);
+          setTimeout(onComplete, 1250);
+          return 100;
+        }
+        return next;
+      });
+    }, 110);
+    return () => clearInterval(id);
+  }, [onComplete]);
+
+  const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+
+  return (
+    <div
+      className={`loader ${exiting ? 'loader--exit' : ''}`}
+      role="status"
+      aria-live="polite"
+      aria-label={`Loading ${Math.round(progress)} percent`}
+    >
+      <div className="loader__glow" aria-hidden="true" />
+      <div className="loader__content">
+        <div className="loader__stage" aria-hidden="true">
+          <svg className="loader__ring" viewBox="0 0 160 160">
+            <circle className="loader__ring-track" cx="80" cy="80" r="66" />
+            <circle
+              className="loader__ring-fill"
+              cx="80" cy="80" r="66"
+              pathLength="100"
+              style={{ strokeDashoffset: 100 - progress }}
+            />
+          </svg>
+          <svg className="loader__mandala" viewBox="0 0 160 160" fill="none">
+            <circle className="loader__center" cx="80" cy="80" r="12" pathLength="100" />
+            {angles.map((a, i) => (
+              <g key={a} transform={`rotate(${a} 80 80)`}>
+                <path
+                  className="loader__petal"
+                  pathLength="100"
+                  style={{ animationDelay: `${0.25 + i * 0.09}s` }}
+                  d="M80 70 q10 -14 0 -28 q-10 14 0 28"
+                />
+                <circle
+                  className="loader__dot"
+                  cx="80" cy="38" r="2.4"
+                  style={{ animationDelay: `${0.55 + i * 0.09}s` }}
+                />
+              </g>
+            ))}
+          </svg>
+        </div>
+        <p className="loader__blessing">ಶುಭ ವಿವಾಹ</p>
+        <p className="loader__caption">ಬಿ &amp; ಎಸ್</p>
+        <p className="loader__pct">
+          <span className="loader__pct-num">{Math.round(progress)}</span>
+          <span className="loader__pct-sym">%</span>
         </p>
-        <p className={`cin__line cin__line--accent ${phase >= 2 ? 'cin__line--vis' : ''}`}>
-          One beautiful beginning
-        </p>
-        <p className={`cin__line cin__line--small ${phase >= 3 ? 'cin__line--vis' : ''}`}>
-          💍
-        </p>
-        <div className={`cin__bar ${phase >= 4 ? 'cin__bar--go' : ''}`} />
       </div>
     </div>
   );
 }
 
-// ─── SCROLL PROGRESS BAR ────────────────────────────────
-function ScrollProgress() {
-  const [pct, setPct] = useState(0);
-  useEffect(() => {
-    const onScroll = () => {
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      setPct(h > 0 ? (window.scrollY / h) * 100 : 0);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  return <div className="sprogress" style={{ width: `${pct}%` }} />;
-}
+/* ═══════════════════════════════════════════════════
+   OPENING SCREEN — maroon panels part sideways, an
+   outlined frame draws in, names reveal letter by letter
+   with an orange-foil sweep, petals burst from center.
+   ═══════════════════════════════════════════════════ */
+const OPENING_BURST = Array.from({ length: 16 }, (_, i) => {
+  const a = (360 / 16) * i;
+  const d = 130 + (i % 3) * 46;
+  const rad = (a * Math.PI) / 180;
+  return {
+    id: i,
+    tx: Math.round(Math.cos(rad) * d),
+    ty: Math.round(Math.sin(rad) * d),
+    r: Math.round(a + 90),
+    size: 7 + (i % 4) * 3,
+    maroon: i % 3 === 0,
+    delay: 0.25 + (i % 5) * 0.05,
+  };
+});
 
-// ─── PARALLAX WRAPPER ───────────────────────────────────
-function Parallax({ children, speed = 0.3, className = '' }) {
-  const ref = useRef(null);
-  const [offset, setOffset] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      const center = rect.top + rect.height / 2 - window.innerHeight / 2;
-      setOffset(center * speed * -1);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [speed]);
-
+function Letters({ text, base }) {
   return (
-    <div ref={ref} className={className} style={{ transform: `translateY(${offset}px)` }}>
-      {children}
-    </div>
-  );
-}
-
-// ─── REVEAL ON SCROLL ───────────────────────────────────
-function Reveal({ children, className = '', variant = 'up', delay = 0, threshold = 0.15 }) {
-  const ref = useRef(null);
-  const [vis, setVis] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVis(true); obs.unobserve(el); } },
-      { threshold, rootMargin: '0px 0px -30px 0px' },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-
-  return (
-    <div
-      ref={ref}
-      className={`rv rv--${variant} ${vis ? 'rv--in' : ''} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >{children}</div>
-  );
-}
-
-// ─── SPLIT TEXT (per word reveal) ───────────────────────
-function SplitText({ text, className = '', delay = 0, tag: Tag = 'span' }) {
-  const ref = useRef(null);
-  const [vis, setVis] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVis(true); obs.unobserve(el); } },
-      { threshold: 0.2 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  const words = text.split(' ');
-
-  return (
-    <Tag ref={ref} className={`split ${vis ? 'split--in' : ''} ${className}`}>
-      {words.map((w, i) => (
-        <span key={i} className="split__word" style={{ animationDelay: `${delay + i * 80}ms` }}>
-          {w}&nbsp;
+    <span className="opening__line">
+      {Array.from(text).map((ch, i) => (
+        <span
+          key={i}
+          className="opening__ltr"
+          style={{ transitionDelay: `${base + i * 55}ms` }}
+        >
+          {ch}
         </span>
       ))}
-    </Tag>
+    </span>
   );
 }
 
-// ─── ROLLING NUMBER ─────────────────────────────────────
-function RollingNum({ value, label }) {
-  const ref = useRef(null);
-  const [display, setDisplay] = useState(0);
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setStarted(true); obs.unobserve(el); } },
-      { threshold: 0.5 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!started) return;
-    const dur = 1200;
-    const start = performance.now();
-    const tick = (now) => {
-      const t = Math.min((now - start) / dur, 1);
-      const ease = 1 - Math.pow(1 - t, 3);
-      setDisplay(Math.round(ease * value));
-      if (t < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [started, value]);
-
+function OpeningFrame() {
+  const corners = [
+    { k: 'tl', style: { top: 0, left: 0 } },
+    { k: 'tr', style: { top: 0, right: 0, transform: 'rotate(90deg)' } },
+    { k: 'br', style: { bottom: 0, right: 0, transform: 'rotate(180deg)' } },
+    { k: 'bl', style: { bottom: 0, left: 0, transform: 'rotate(270deg)' } },
+  ];
   return (
-    <div ref={ref} className="rnum">
-      <span className="rnum__val">{String(display).padStart(label === 'days' ? 3 : 2, '0')}</span>
-      <span className="rnum__lbl">{label}</span>
+    <div className="opening__frame" aria-hidden="true">
+      {corners.map((c) => (
+        <svg key={c.k} className="opening__corner" style={c.style} viewBox="0 0 64 64" fill="none">
+          <path pathLength="1" d="M4 60 L4 18 Q4 4 18 4 L60 4" />
+          <path pathLength="1" d="M4 34 Q16 34 22 28 M34 4 Q34 16 28 22" />
+          <circle pathLength="1" cx="15" cy="15" r="4" />
+        </svg>
+      ))}
     </div>
   );
 }
 
-// ─── COUNTDOWN ──────────────────────────────────────────
+function OpeningScreen({ onComplete }) {
+  const [step, setStep] = useState(0); // 0=enter, 1=visible, 2=exit
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setStep(1), 50);
+    const t2 = setTimeout(() => setStep(2), 3600);
+    const t3 = setTimeout(onComplete, 4500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [onComplete]);
+
+  const cls = step === 0 ? '' : step === 1 ? 'opening--in' : 'opening--out';
+
+  return (
+    <div className={`opening ${cls}`}>
+      <div className="opening__panel opening__panel--left" aria-hidden="true" />
+      <div className="opening__panel opening__panel--right" aria-hidden="true" />
+      <div className="opening__glow" aria-hidden="true" />
+      <OpeningFrame />
+
+      <div className="opening__burst" aria-hidden="true">
+        {OPENING_BURST.map((p) => (
+          <span
+            key={p.id}
+            className={`opening__petal ${p.maroon ? 'opening__petal--maroon' : 'opening__petal--orange'}`}
+            style={{
+              width: p.size, height: p.size * 1.15,
+              '--tx': `${p.tx}px`, '--ty': `${p.ty}px`, '--r': `${p.r}deg`,
+              animationDelay: `${p.delay}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="opening__body">
+        <p className="opening__blessing">ಶುಭ ವಿವಾಹ</p>
+        <p className="opening__kicker">A Wedding Invitation</p>
+        <div className="opening__names">
+          <Letters text="Bhargav" base={550} />
+          <span className="opening__amp">&amp;</span>
+          <Letters text="Sowmya" base={1150} />
+        </div>
+        <p className="opening__date">26 &amp; 27 · August · 2026</p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   COUNTDOWN — odometer digits: only the changed digit
+   remounts (keyed by position+char) and replays the roll.
+   ═══════════════════════════════════════════════════ */
 function Countdown() {
-  const target = useMemo(() => new Date('2025-10-12T07:30:00Z'), []);
+  const target = useMemo(() => new Date(WEDDING_TARGET), []);
 
   const calc = useCallback(() => {
     const d = target.getTime() - Date.now();
@@ -191,457 +333,434 @@ function Countdown() {
 
   if (!left) {
     return (
-      <div className="cd-done">
-        <p>The celebration has happened — thank you for the blessings! 💕</p>
+      <div className="countdown countdown--done">
+        <p className="countdown__done-title">We're Married!</p>
+        <p className="countdown__done-sub">Thank you for being part of our special days.</p>
       </div>
     );
   }
 
-  return (
-    <div className="cd">
-      <RollingNum value={left.days} label="days" />
-      <span className="cd__sep">:</span>
-      <RollingNum value={left.hours} label="hrs" />
-      <span className="cd__sep">:</span>
-      <RollingNum value={left.minutes} label="min" />
-      <span className="cd__sep">:</span>
-      <RollingNum value={left.seconds} label="sec" />
-    </div>
-  );
-}
-
-// ─── AURORA BACKGROUND (Canvas) ──────────────────────────
-function AuroraBG() {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const cvs = ref.current;
-    if (!cvs) return;
-    const ctx = cvs.getContext('2d');
-    let raf;
-
-    function resize() {
-      cvs.width = window.innerWidth;
-      cvs.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    const blobs = [
-      { x: 0.3, y: 0.4, r: 260, color: 'rgba(224,115,106,0.18)', vx: 0.0003, vy: 0.0002 },
-      { x: 0.7, y: 0.3, r: 220, color: 'rgba(69,134,126,0.14)', vx: -0.0002, vy: 0.0003 },
-      { x: 0.5, y: 0.7, r: 200, color: 'rgba(190,160,130,0.12)', vx: 0.0002, vy: -0.0002 },
-    ];
-
-    function draw(t) {
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
-      blobs.forEach(b => {
-        const cx = (b.x + Math.sin(t * b.vx) * 0.15) * cvs.width;
-        const cy = (b.y + Math.cos(t * b.vy) * 0.15) * cvs.height;
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, b.r * (cvs.width / 1000));
-        grad.addColorStop(0, b.color);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, cvs.width, cvs.height);
-      });
-      raf = requestAnimationFrame(draw);
-    }
-    raf = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-    };
-  }, []);
-
-  return <canvas ref={ref} className="aurora" />;
-}
-
-// ═════════════════════════════════════════════════════════
-//  PANEL 1 — HERO
-// ═════════════════════════════════════════════════════════
-function PanelHero() {
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    const delays = [100, 500, 1100, 1600, 2200, 2800, 3400];
-    const timers = delays.map((d, i) => setTimeout(() => setStep(i + 1), d));
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  const scrollNext = () => {
-    const el = document.getElementById('panel-countdown');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  return (
-    <section className="panel panel--hero" id="panel-hero">
-      <AuroraBG />
-      <div className="panel__grain" />
-
-      <div className="hero">
-        <span className={`hero__tag ${step >= 1 ? 'hero__tag--in' : ''}`}>THE ENGAGEMENT OF</span>
-
-        <div className="hero__names">
-          <h1 className={`hero__n1 ${step >= 2 ? 'hero__n1--in' : ''}`}>
-            {'Bhargav'.split('').map((c, i) => (
-              <span key={i} className="hero__ch" style={{ transitionDelay: `${i * 70 + 200}ms` }}>{c}</span>
-            ))}
-          </h1>
-          <div className={`hero__and ${step >= 3 ? 'hero__and--in' : ''}`}>
-            <span className="hero__line" />
-            <span className="hero__heart">♥</span>
-            <span className="hero__line" />
-          </div>
-          <h1 className={`hero__n2 ${step >= 4 ? 'hero__n2--in' : ''}`}>
-            {'Sowmya'.split('').map((c, i) => (
-              <span key={i} className="hero__ch" style={{ transitionDelay: `${i * 70 + 200}ms` }}>{c}</span>
-            ))}
-          </h1>
-        </div>
-
-        <p className={`hero__sub ${step >= 5 ? 'hero__sub--in' : ''}`}>
-          Together with their families, request the pleasure of your company
-        </p>
-
-        <div className={`hero__pills ${step >= 6 ? 'hero__pills--in' : ''}`}>
-          <span className="pill"><i className="pill__dot" />12 October 2025</span>
-          <span className="pill"><i className="pill__dot pill__dot--teal" />1:00 PM IST</span>
-          <span className="pill"><i className="pill__dot pill__dot--gold" />Tumakuru</span>
-        </div>
-
-        <button className={`hero__cta ${step >= 7 ? 'hero__cta--in' : ''}`} onClick={scrollNext}>
-          <span>Explore</span>
-          <svg className="hero__cta-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-        </button>
-      </div>
-
-      {/* Animated mouse indicator */}
-      <div className={`hero__mouse ${step >= 7 ? 'hero__mouse--in' : ''}`}>
-        <div className="hero__mouse-body">
-          <div className="hero__mouse-wheel" />
-        </div>
-        <span className="hero__mouse-text">scroll</span>
-      </div>
-    </section>
-  );
-}
-
-// ─── PEEK SECTION (visible below hero fold) ─────────────
-function PeekSection() {
-  return (
-    <div className="peek">
-      <div className="peek__inner">
-        <span className="peek__label">coming up</span>
-        <p className="peek__text">The countdown, the details & more...</p>
-        <div className="peek__arrow" />
-      </div>
-    </div>
-  );
-}
-
-// ═════════════════════════════════════════════════════════
-//  PANEL 2 — COUNTDOWN
-// ═════════════════════════════════════════════════════════
-function PanelCountdown() {
-  return (
-    <section className="panel panel--cd" id="panel-countdown">
-      <div className="panel__grain" />
-      <div className="panel__inner">
-        <Reveal>
-          <span className="sec-num">01</span>
-        </Reveal>
-        <Reveal delay={100}>
-          <SplitText text="The Countdown" className="sec-title" tag="h2" />
-        </Reveal>
-        <Reveal delay={200}>
-          <p className="sec-sub">Every second brings us closer to the celebration</p>
-        </Reveal>
-        <Reveal delay={350}>
-          <Countdown />
-        </Reveal>
-        <Reveal delay={500}>
-          <a
-            href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Bhargav%20%26%20Sowmya%20Engagement&dates=20251012T063000Z/20251012T083000Z&details=Join%20us%20for%20the%20engagement%20ceremony%20of%20Bhargav%20and%20Sowmya&location=Shree%20Padmavathi%20Venkateshwara%20Samudaya%20Bhavana%2C%204th%20Main%20Rd%2C%20Jayanagar%20West%2C%20Tumakuru%2C%20Karnataka%20572102"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn"
-          >Save the date →</a>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ═════════════════════════════════════════════════════════
-//  PANEL 3 — DETAILS (split)
-// ═════════════════════════════════════════════════════════
-function PanelDetails() {
-  return (
-    <section className="panel panel--details" id="panel-details">
-      <div className="panel__grain" />
-      <div className="split-layout">
-        <div className="split-layout__left">
-          <Reveal>
-            <span className="sec-num">02</span>
-          </Reveal>
-          <Reveal delay={100}>
-            <SplitText text="The Details" className="sec-title" tag="h2" />
-          </Reveal>
-          <Reveal delay={200}>
-            <p className="sec-sub">Everything you need to know about the day</p>
-          </Reveal>
-        </div>
-        <div className="split-layout__right">
-          <Reveal delay={100}>
-            <div className="info-card">
-              <span className="info-card__num">📅</span>
-              <div>
-                <p className="info-card__label">Date</p>
-                <p className="info-card__val">Sunday, 12th October 2025</p>
-              </div>
-            </div>
-          </Reveal>
-          <Reveal delay={200}>
-            <div className="info-card">
-              <span className="info-card__num">🕐</span>
-              <div>
-                <p className="info-card__label">Time</p>
-                <p className="info-card__val">1:00 PM IST onwards</p>
-              </div>
-            </div>
-          </Reveal>
-          <Reveal delay={300}>
-            <div className="info-card info-card--highlight">
-              <span className="info-card__num">📍</span>
-              <div>
-                <p className="info-card__label">Venue</p>
-                <p className="info-card__val">Shree Padmavathi Venkateshwara Samudaya Bhavana</p>
-                <p className="info-card__extra">4th Main Rd, Jayanagar West, Tumakuru, Karnataka 572102</p>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ═════════════════════════════════════════════════════════
-//  PANEL 4 — SCHEDULE (horizontal timeline)
-// ═════════════════════════════════════════════════════════
-function PanelSchedule() {
-  const items = [
-    { time: '1:00 PM', title: 'Lunch & Refreshments', icon: '🍽️', desc: 'A feast to begin the celebrations as family and friends gather.' },
-    { time: '2:00 PM', title: 'Nishchitartha', icon: '💍', desc: 'The sacred engagement ceremony — when two souls make a promise.' },
-    { time: '3:00 PM', title: 'Blessings & Photography', icon: '📸', desc: 'Seek blessings from our elders, and capture the joy in photographs.' },
+  const units = [
+    { v: left.days, l: 'Days' },
+    { v: left.hours, l: 'Hours' },
+    { v: left.minutes, l: 'Minutes' },
+    { v: left.seconds, l: 'Seconds' },
   ];
 
   return (
-    <section className="panel panel--sched" id="panel-schedule">
-      <div className="panel__grain" />
-      <div className="panel__inner">
-        <Reveal>
-          <span className="sec-num">03</span>
-        </Reveal>
-        <Reveal delay={100}>
-          <SplitText text="The Schedule" className="sec-title" tag="h2" />
-        </Reveal>
-
-        <div className="timeline">
-          <div className="timeline__track" />
-          {items.map((it, i) => (
-            <Reveal key={i} delay={200 + i * 200} variant="scale">
-              <div className="tl-card">
-                <div className="tl-card__dot" />
-                <span className="tl-card__icon">{it.icon}</span>
-                <span className="tl-card__time">{it.time}</span>
-                <h3 className="tl-card__title">{it.title}</h3>
-                <p className="tl-card__desc">{it.desc}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ═════════════════════════════════════════════════════════
-//  PANEL 5 — VENUE (immersive map)
-// ═════════════════════════════════════════════════════════
-function PanelVenue() {
-  return (
-    <section className="panel panel--venue" id="panel-venue">
-      <div className="panel__grain" />
-      <div className="venue-wrap">
-        <div className="venue-info">
-          <Reveal><span className="sec-num">04</span></Reveal>
-          <Reveal delay={100}><SplitText text="The Venue" className="sec-title" tag="h2" /></Reveal>
-          <Reveal delay={200}>
-            <h3 className="venue-info__name">Shree Padmavathi Venkateshwara Samudaya Bhavana</h3>
-          </Reveal>
-          <Reveal delay={300}>
-            <p className="venue-info__addr">4th Main Rd, Jayanagar West<br/>Tumakuru, Karnataka 572102</p>
-          </Reveal>
-          <Reveal delay={400}>
-            <a
-              href="https://www.google.com/maps/dir/?api=1&destination=Shree+Padmavathi+Venkateshwara+Samudaya+Bhavana,+4th+Main+Rd,+Jayanagar+West,+Tumakuru,+Karnataka+572102"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn--outline"
-            >Get directions →</a>
-          </Reveal>
-        </div>
-        <div className="venue-map">
-          <iframe
-            src="https://www.google.com/maps?q=Shree+Padmavathi+Venkateshwara+Samudaya+Bhavana+Tumkur&output=embed"
-            title="Venue Map"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ═════════════════════════════════════════════════════════
-//  PANEL 6 — CLOSING (full cinematic)
-// ═════════════════════════════════════════════════════════
-function PanelClosing() {
-  return (
-    <section className="panel panel--closing" id="panel-closing">
-      <div className="panel__grain" />
-      <div className="closing">
-        <Reveal>
-          <p className="closing__over">with love & blessings</p>
-        </Reveal>
-        <Parallax speed={0.15}>
-          <Reveal delay={200}>
-            <h2 className="closing__headline">We would be honoured<br/>by your presence</h2>
-          </Reveal>
-        </Parallax>
-        <Reveal delay={400}>
-          <div className="closing__names">
-            <span>Bhargav</span>
-            <span className="closing__amp">♥</span>
-            <span>Sowmya</span>
+    <div className="countdown">
+      {units.map((u, i) => {
+        const digits = String(u.v).padStart(2, '0').split('');
+        return (
+          <div key={u.l} className="countdown__cell" style={{ '--cd-i': i }}>
+            <Corners />
+            <span className="countdown__num">
+              {digits.map((ch, di) => (
+                <span key={`${di}-${ch}`} className="countdown__digit">{ch}</span>
+              ))}
+            </span>
+            <span className="countdown__lbl">{u.l}</span>
           </div>
-        </Reveal>
-        <Reveal delay={600}>
-          <p className="closing__date">12 · 10 · 2025</p>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ─── PAGE BAR (fixed side nav) ──────────────────────────
-const PAGE_SECTIONS = [
-  { id: 'panel-hero', label: 'Home' },
-  { id: 'panel-countdown', label: 'Countdown' },
-  { id: 'panel-details', label: 'Details' },
-  { id: 'panel-schedule', label: 'Schedule' },
-  { id: 'panel-venue', label: 'Venue' },
-  { id: 'panel-closing', label: 'Blessings' },
-];
-
-function useActivePanel() {
-  const [active, setActive] = useState('panel-hero');
-
-  useEffect(() => {
-    const observers = [];
-    PAGE_SECTIONS.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActive(id); },
-        { threshold: 0.25, rootMargin: '-5% 0px -50% 0px' },
-      );
-      obs.observe(el);
-      observers.push(obs);
-    });
-    return () => observers.forEach(o => o.disconnect());
-  }, []);
-
-  return active;
-}
-
-function PageBar({ active }) {
-  const scrollTo = (id) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const activeIdx = PAGE_SECTIONS.findIndex(s => s.id === active);
-
-  return (
-    <div className="pgbar">
-      {/* Track line */}
-      <div className="pgbar__track">
-        <div
-          className="pgbar__fill"
-          style={{ height: `${(activeIdx / (PAGE_SECTIONS.length - 1)) * 100}%` }}
-        />
-      </div>
-      {/* Dots with labels */}
-      {PAGE_SECTIONS.map((s, i) => (
-        <button
-          key={s.id}
-          className={`pgbar__item ${active === s.id ? 'pgbar__item--active' : ''}`}
-          onClick={() => scrollTo(s.id)}
-          aria-label={s.label}
-        >
-          <span className="pgbar__dot" />
-          <span className="pgbar__label">{s.label}</span>
-        </button>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-// ─── FOOTER ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════
+   REVEAL ON SCROLL — IntersectionObserver with layered
+   safety nets so content is NEVER left permanently hidden.
+   ═══════════════════════════════════════════════════ */
+function Reveal({ children, className = '', delay = 0, dir = 'up', as: Tag = 'div' }) {
+  const ref = useRef(null);
+  const [vis, setVis] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === 'undefined') { setVis(true); return; }
+
+    let settled = false;
+    const show = () => { if (!settled) { settled = true; setVis(true); } };
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) { show(); obs.disconnect(); }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
+    );
+    obs.observe(el);
+
+    const raf = requestAnimationFrame(() => {
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      if (r.top < vh * 0.92 && r.bottom > 0) { show(); obs.disconnect(); }
+    });
+
+    const timer = setTimeout(() => { show(); obs.disconnect(); }, 2500 + delay);
+
+    return () => { obs.disconnect(); cancelAnimationFrame(raf); clearTimeout(timer); };
+  }, [delay]);
+
+  return (
+    <Tag
+      ref={ref}
+      className={`reveal reveal--${dir} ${vis ? 'reveal--vis' : ''} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO — names framed by the outlined temple arch
+   ═══════════════════════════════════════════════════ */
+function Hero() {
+  const [ready, setReady] = useState(false);
+  const [hasPhoto, setHasPhoto] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
+  const toMuhurtham = () => {
+    const el = document.getElementById('muhurtham');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <section id="top" className={`hero ${ready ? 'hero--ready' : ''} ${hasPhoto ? 'hero--photo' : ''}`}>
+      <div className="hero__photo" aria-hidden="true">
+        <img
+          src={`${process.env.PUBLIC_URL || ''}/couple.jpg`}
+          alt=""
+          onLoad={() => setHasPhoto(true)}
+          onError={() => setHasPhoto(false)}
+        />
+        <span className="hero__photo-scrim" />
+      </div>
+
+      <div className="hero__inner">
+        <Arch className="hero__crest" />
+        <p className="hero__eyebrow">Together with their families</p>
+        <h1 className="hero__names">
+          <span className="hero__name">Bhargav</span>
+          <span className="hero__amp">&amp;</span>
+          <span className="hero__name">Sowmya</span>
+        </h1>
+        <p className="hero__tagline">
+          request the honour of your presence as they begin their life together
+        </p>
+        <div className="hero__meta">
+          <span className="hero__meta-item">26 &amp; 27 August 2026</span>
+          <span className="hero__meta-dot" />
+          <span className="hero__meta-item">{VENUE.name}, {VENUE.city}</span>
+        </div>
+      </div>
+
+      <button type="button" className="hero__scroll" onClick={toMuhurtham} aria-label="Scroll down">
+        <span className="hero__scroll-txt">Scroll</span>
+        <span className="hero__scroll-chevron" aria-hidden="true" />
+      </button>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   MUHURTHAM — the centrepiece: an outlined frame, the
+   auspicious time, and the live countdown.
+   ═══════════════════════════════════════════════════ */
+function Muhurtham() {
+  return (
+    <section className="sec sec--muhurtham" id="muhurtham">
+      <div className="sec__wrap">
+        <Reveal>
+          <div className="muhurtham">
+            <span className="muhurtham__glow" aria-hidden="true" />
+            <Corners />
+            <div className="muhurtham__body">
+              <Paisley className="muhurtham__paisley" />
+              <p className="muhurtham__kicker">The Auspicious Moment</p>
+              <p className="muhurtham__when">Thursday, 27<sup>th</sup> August 2026</p>
+              <span className="muhurtham__time-wrap">
+                <span className="muhurtham__time-glow" aria-hidden="true" />
+                <p className="muhurtham__time">11:05 – 11:25 AM</p>
+              </span>
+              <div className="muhurtham__om"><span /><em>ॐ</em><span /></div>
+              <p className="countdown__intro">Counting down to the muhurtham</p>
+              <Countdown />
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   CELEBRATIONS — the two days, no minute-by-minute plan
+   ═══════════════════════════════════════════════════ */
+function Celebrations() {
+  return (
+    <section className="sec sec--days" id="celebrations">
+      <div className="sec__wrap">
+        <Reveal>
+          <p className="sec__kicker">Save The Dates</p>
+          <h2 className="sec__title">Two Days of Celebration</h2>
+        </Reveal>
+
+        <Reveal delay={60}><Divider /></Reveal>
+
+        <div className="days-grid">
+          <Reveal delay={120} dir="right">
+            <article className="day-card">
+              <Corners />
+              <span className="day-card__tag">Day One</span>
+              <h3 className="day-card__title">Reception</h3>
+              <p className="day-card__date">Wednesday, 26 August 2026</p>
+              <p className="day-card__time">7:00 PM onwards</p>
+              <a href={CAL_RECEPTION} target="_blank" rel="noopener noreferrer" className="day-card__cal">
+                Add to calendar
+              </a>
+            </article>
+          </Reveal>
+
+          <Reveal delay={220} dir="left">
+            <article className="day-card day-card--accent">
+              <span className="day-card__sheen" aria-hidden="true" />
+              <Corners />
+              <span className="day-card__tag">Day Two</span>
+              <h3 className="day-card__title">Wedding</h3>
+              <p className="day-card__date">Thursday, 27 August 2026</p>
+              <p className="day-card__time">Muhurtham · 11:05 – 11:25 AM</p>
+              <a href={CAL_WEDDING} target="_blank" rel="noopener noreferrer" className="day-card__cal">
+                Add to calendar
+              </a>
+            </article>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   VENUE / MAP
+   ═══════════════════════════════════════════════════ */
+function Venue() {
+  return (
+    <section className="sec sec--venue" id="venue">
+      <div className="sec__wrap">
+        <Reveal>
+          <p className="sec__kicker">Find Us Here</p>
+          <h2 className="sec__title">The Venue</h2>
+        </Reveal>
+
+        <Reveal delay={60}><Divider /></Reveal>
+
+        <Reveal delay={120}>
+          <div className="venue-card">
+            <Corners />
+            <div className="venue-card__info">
+              <div>
+                <h3 className="venue-card__name">{VENUE.name}</h3>
+                <p className="venue-card__addr">{VENUE.city}</p>
+                <p className="venue-card__addr venue-card__addr--muted">
+                  Both the reception and the wedding are held here
+                </p>
+              </div>
+            </div>
+            <div className="venue-card__map">
+              <iframe
+                src={VENUE.mapEmbed}
+                title="Venue Location"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+            <div className="venue-card__actions">
+              <a href={VENUE.mapDir} target="_blank" rel="noopener noreferrer" className="btn">
+                Get directions
+              </a>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   CLOSING / BLESSINGS
+   ═══════════════════════════════════════════════════ */
+function Closing() {
+  return (
+    <section className="sec sec--closing" id="blessings">
+      <div className="sec__wrap">
+        <Reveal>
+          <div className="closing">
+            <Paisley className="closing__paisley" />
+            <h2 className="closing__title">With the blessings of our families</h2>
+            <p className="closing__text">
+              Your presence is the blessing we hope for most. Come celebrate
+              this beautiful beginning with us.
+            </p>
+            <div className="closing__names">
+              <span>Bhargav</span><em>&amp;</em><span>Sowmya</span>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 function Footer() {
   return (
-    <footer className="ft">
-      <p>crafted with ❤️ by Bhargav B P</p>
+    <footer className="footer">
+      <p className="footer__made">Crafted with love by Bhargav B P</p>
+      <p className="footer__copy">&copy; 2026</p>
     </footer>
   );
 }
 
-// ═════════════════════════════════════════════════════════
-//  MAIN EXPORT
-// ═════════════════════════════════════════════════════════
-export default function WeddingPage() {
-  const [ready, setReady] = useState(false);
-  const onReady = useCallback(() => setReady(true), []);
+/* ═══════════════════════════════════════════════════
+   SCROLL RAIL — a custom scrollbar on the LEFT edge: a
+   thin outlined track whose maroon→orange fill grows with
+   scroll progress, with a clickable marker per section
+   that lights up as you reach it. On phones it collapses
+   to a slim progress line pinned to the edge.
+   ═══════════════════════════════════════════════════ */
+const SECTIONS = [
+  { id: 'top', label: 'Invitation' },
+  { id: 'muhurtham', label: 'Muhurtham' },
+  { id: 'celebrations', label: 'The Days' },
+  { id: 'venue', label: 'The Venue' },
+  { id: 'blessings', label: 'Blessings' },
+];
+
+function ScrollRail() {
+  const [progress, setProgress] = useState(0);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
-    document.body.style.overflow = ready ? '' : 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, [ready]);
+    let raf = 0;
+    const update = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
+        // Active = last section whose top has passed 40% of the viewport.
+        const mark = window.scrollY + window.innerHeight * 0.4;
+        let idx = 0;
+        SECTIONS.forEach((s, i) => {
+          const el = document.getElementById(s.id);
+          if (el && el.offsetTop <= mark) idx = i;
+        });
+        setActive(idx);
+      });
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
-  if (!ready) return <CinematicOpening onFinish={onReady} />;
+  const jump = useCallback((id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
-  return <AppContent />;
+  return (
+    <nav className="rail" aria-label="Sections">
+      <span className="rail__track" aria-hidden="true">
+        <span className="rail__fill" style={{ height: `${progress * 100}%` }} />
+      </span>
+      <ul className="rail__dots">
+        {SECTIONS.map((s, i) => (
+          <li key={s.id}>
+            <button
+              type="button"
+              className={`rail__dot ${i === active ? 'rail__dot--on' : ''} ${i < active ? 'rail__dot--past' : ''}`}
+              onClick={() => jump(s.id)}
+              aria-label={`Go to ${s.label}`}
+              aria-current={i === active ? 'true' : undefined}
+            >
+              <span className="rail__label">{s.label}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
 }
 
-function AppContent() {
-  const active = useActivePanel();
+/* ═══════════════════════════════════════════════════
+   MAIN ORCHESTRATOR — load → open → page
+   ═══════════════════════════════════════════════════ */
+function WeddingPage() {
+  const [phase, setPhase] = useState('load');
+
+  const onLoaded = useCallback(() => setPhase('open'), []);
+  const onOpened = useCallback(() => setPhase('main'), []);
+
+  // Lock page scroll during the intro screens only.
+  useEffect(() => {
+    document.body.style.overflow = phase === 'main' ? '' : 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, [phase]);
+
+  // One-time "peek": once the page is live and untouched, gently dip down a
+  // little and glide back so the guest sees there's more below. Any real
+  // scroll gesture cancels it; reduced-motion skips it entirely.
+  useEffect(() => {
+    if (phase !== 'main') return undefined;
+    const reduced =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return undefined;
+
+    let touched = false;
+    const cancel = () => { touched = true; };
+    window.addEventListener('wheel', cancel, { passive: true, once: true });
+    window.addEventListener('touchstart', cancel, { passive: true, once: true });
+    window.addEventListener('keydown', cancel, { once: true });
+
+    const down = setTimeout(() => {
+      if (!touched && window.scrollY < 4) {
+        window.scrollTo({ top: 90, behavior: 'smooth' });
+        setTimeout(() => { if (!touched) window.scrollTo({ top: 0, behavior: 'smooth' }); }, 780);
+      }
+    }, 2200);
+
+    return () => {
+      clearTimeout(down);
+      window.removeEventListener('wheel', cancel);
+      window.removeEventListener('touchstart', cancel);
+      window.removeEventListener('keydown', cancel);
+    };
+  }, [phase]);
+
+  if (phase === 'load') return <LoadingScreen onComplete={onLoaded} />;
+  if (phase === 'open') return <OpeningScreen onComplete={onOpened} />;
 
   return (
     <div className="app">
-      <ScrollProgress />
-      <PageBar active={active} />
-      <PanelHero />
-      <PeekSection />
-      <PanelCountdown />
-      <PanelDetails />
-      <PanelSchedule />
-      <PanelVenue />
-      <PanelClosing />
+      <Petals />
+      <ScrollRail />
+      <Hero />
+      <Muhurtham />
+      <Celebrations />
+      <Venue />
+      <Closing />
       <Footer />
     </div>
   );
 }
+
+export default WeddingPage;
